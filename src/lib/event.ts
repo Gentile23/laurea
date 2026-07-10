@@ -13,46 +13,46 @@ export const event = {
 
 export type QuizQuestion =
   | {
-      id: string;
-      type: "choice";
-      question: string;
-      options: string[];
-      correctAnswer: string;
-    }
+    id: string;
+    type: "choice";
+    question: string;
+    options: string[];
+    correctAnswer: string;
+  }
   | {
-      id: string;
-      type: "text";
-      question: string;
-      acceptedAnswers: string[];
-      placeholder: string;
-    };
+    id: string;
+    type: "text";
+    question: string;
+    acceptedAnswers: string[];
+    placeholder: string;
+  };
 
 export const quizQuestions: QuizQuestion[] = [
   {
     id: "disney",
     type: "choice",
-    question: "Qual era, ed e ancora, la mia serie TV Disney preferita?",
+    question: "Qual è la mia serie TV Disney preferita?",
     options: ["Violetta", "Soy Luna", "Flor"],
     correctAnswer: "Violetta"
   },
   {
     id: "cantante",
     type: "choice",
-    question: "Qual e il mio cantante preferito?",
+    question: "Chi è il mio cantante preferito?",
     options: ["Bad Bunny", "Justin Bieber", "Ultimo"],
     correctAnswer: "Bad Bunny"
   },
   {
     id: "zona-napoli",
     type: "choice",
-    question: "Come si chiama la zona dove vivevo a Napoli?",
+    question: "Qual è la zona di Napoli in cui vivevo?",
     options: ["Materdei", "Salvator Rosa", "Quattro giornate"],
     correctAnswer: "Materdei"
   },
   {
     id: "filologia-romanza",
     type: "choice",
-    question: "Quante volte ho ridato l'esame di filologia romanza?",
+    question: "Quante volte ho dato l'esame di filologia romanza?",
     options: ["1", "2", "0", "Passato subito"],
     correctAnswer: "2"
   },
