@@ -555,7 +555,9 @@ textarea:focus {
 
 .checkLine input {
   width: 22px;
+  flex: 0 0 22px;
   min-height: 22px;
+  padding: 0;
   accent-color: var(--hot);
 }
 

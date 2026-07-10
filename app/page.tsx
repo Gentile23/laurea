@@ -330,10 +330,6 @@ export default function Home() {
               No, non posso
             </label>
           </fieldset>
-          <label>
-            Allergie o intolleranze
-            <textarea name="allergies" rows={3} placeholder="Scrivi eventuali esigenze alimentari" />
-          </label>
           <label className="checkLine">
             <input
               type="checkbox"
@@ -354,6 +350,10 @@ export default function Home() {
               </label>
             </div>
           )}
+          <label>
+            Allergie o intolleranze
+            <textarea name="allergies" rows={3} placeholder="Scrivi eventuali esigenze alimentari" />
+          </label>
           <label>
             Messaggio per Annachiara
             <textarea name="message" rows={3} />
