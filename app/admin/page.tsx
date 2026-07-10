@@ -7,6 +7,7 @@ import { supabase } from "../../src/lib/supabase";
 
 type LoadStatus = "idle" | "loading" | "success" | "error";
 type MutationResult = { error: { message: string } | null };
+type DeleteResult = MutationResult & { data: { id: string }[] | null };
 
 type Rsvp = {
   id: string;
@@ -121,7 +122,10 @@ export default function AdminPage() {
     }
 
     const client = supabase;
-    await runDelete(() => client.from("rsvps").delete().eq("id", id), "Conferma eliminata.");
+    await runDelete(
+      () => client.from("rsvps").delete().eq("id", id).select("id"),
+      "Conferma eliminata."
+    );
   }
 
   async function deleteScore(id: string) {
@@ -138,7 +142,10 @@ export default function AdminPage() {
     }
 
     const client = supabase;
-    await runDelete(() => client.from("quiz_scores").delete().eq("id", id), "Punteggio eliminato.");
+    await runDelete(
+      () => client.from("quiz_scores").delete().eq("id", id).select("id"),
+      "Punteggio eliminato."
+    );
   }
 
   async function deletePost(post: WallPost) {
@@ -157,10 +164,18 @@ export default function AdminPage() {
     const client = supabase;
     const storagePath = getStoragePath(post.image_url);
     if (storagePath) {
-      await client.storage.from("wall-images").remove([storagePath]);
+      const { error } = await client.storage.from("wall-images").remove([storagePath]);
+      if (error) {
+        setStatus("error");
+        setActionMessage(`Eliminazione immagine non riuscita: ${error.message}`);
+        return;
+      }
     }
 
-    await runDelete(() => client.from("wall_posts").delete().eq("id", post.id), "Foto eliminata.");
+    await runDelete(
+      () => client.from("wall_posts").delete().eq("id", post.id).select("id"),
+      "Foto eliminata."
+    );
   }
 
   async function clearLocalData() {
@@ -268,10 +283,25 @@ export default function AdminPage() {
   }
 
   async function runDelete(
-    action: () => PromiseLike<MutationResult>,
+    action: () => PromiseLike<DeleteResult>,
     successMessage: string
   ) {
-    await runMutation(action, successMessage, "Eliminazione non riuscita");
+    setStatus("loading");
+    const { data, error } = await action();
+    if (error) {
+      setStatus("error");
+      setActionMessage(`Eliminazione non riuscita: ${error.message}`);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      setStatus("error");
+      setActionMessage("Eliminazione non riuscita: nessun elemento trovato o policy Supabase non aggiornata.");
+      return;
+    }
+
+    setActionMessage(successMessage);
+    await loadAdminData();
   }
 
   async function runMutation(

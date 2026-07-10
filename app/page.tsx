@@ -88,10 +88,11 @@ export default function Home() {
 
   async function submitRsvp(eventSubmit: FormEvent<HTMLFormElement>) {
     eventSubmit.preventDefault();
+    const formElement = eventSubmit.currentTarget;
     setRsvpStatus("loading");
     setRsvpError("");
 
-    const form = new FormData(eventSubmit.currentTarget);
+    const form = new FormData(formElement);
     const payload = {
       guest_name: String(form.get("guest_name") || "").trim(),
       attending: form.get("attending") === "yes",
@@ -109,7 +110,7 @@ export default function Home() {
 
     if (!supabase) {
       setRsvpStatus("success");
-      eventSubmit.currentTarget.reset();
+      formElement.reset();
       setHasPlusOne(false);
       return;
     }
@@ -122,7 +123,7 @@ export default function Home() {
     }
 
     setRsvpStatus("success");
-    eventSubmit.currentTarget.reset();
+    formElement.reset();
     setHasPlusOne(false);
   }
 
