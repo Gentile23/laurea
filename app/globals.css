@@ -36,7 +36,7 @@ body {
   font-family: Nunito, "DM Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 16px;
   line-height: 1.5;
-  padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  padding-bottom: 0;
 }
 
 body::selection {
@@ -173,28 +173,6 @@ input:focus-visible,
 textarea:focus-visible {
   outline: 4px solid rgba(255, 213, 74, 0.65);
   outline-offset: 3px;
-}
-
-.mobileStickyCta {
-  position: fixed;
-  z-index: 40;
-  right: 14px;
-  bottom: calc(14px + env(safe-area-inset-bottom));
-  left: 14px;
-  min-height: 58px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.72);
-  border-radius: 22px;
-  color: white;
-  background: linear-gradient(135deg, var(--hot), var(--pink));
-  box-shadow: 0 18px 44px rgba(236, 23, 79, 0.34);
-  font-weight: 1000;
-  text-decoration: none;
-  touch-action: manipulation;
-  animation: stickyBounce 850ms 600ms cubic-bezier(0.2, 1.4, 0.35, 1) both, ctaPulse 2.6s ease-in-out infinite;
 }
 
 .partyHero {
@@ -510,6 +488,37 @@ textarea:focus {
   box-shadow: 0 0 0 5px rgba(255, 213, 74, 0.34);
 }
 
+.filePicker input {
+  position: absolute;
+  width: 1px;
+  min-height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.filePicker span {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(183, 7, 47, 0.3);
+  border-radius: 18px;
+  padding: 12px 14px;
+  color: var(--red);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: inset 0 -3px 0 rgba(183, 7, 47, 0.05);
+  cursor: pointer;
+  font-weight: 1000;
+  text-align: center;
+}
+
+.filePicker:focus-within span,
+.filePicker:hover span {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 5px rgba(255, 213, 74, 0.34);
+}
+
 .radioLine {
   min-height: 48px;
   display: flex;
@@ -531,6 +540,23 @@ textarea:focus {
   color: white;
   background: linear-gradient(135deg, var(--green), #30c988);
   transform: scale(1.01);
+}
+
+.checkLine {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 2px solid rgba(183, 7, 47, 0.14);
+  border-radius: 18px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.checkLine input {
+  width: 22px;
+  min-height: 22px;
+  accent-color: var(--hot);
 }
 
 .twoCols {
@@ -569,6 +595,11 @@ textarea:focus {
   display: grid;
   grid-template-columns: 1fr;
   gap: 14px;
+}
+
+.galleryActions {
+  display: flex;
+  justify-content: center;
 }
 
 .postCard {
@@ -643,6 +674,14 @@ textarea:focus {
 
 .adminShell {
   width: min(100% - 24px, 1120px);
+  display: grid;
+  gap: 18px;
+  margin: 0 auto;
+  padding: 28px 0 60px;
+}
+
+.galleryPage {
+  width: min(100% - 24px, 1180px);
   display: grid;
   gap: 18px;
   margin: 0 auto;
@@ -746,6 +785,24 @@ textarea:focus {
   font-weight: 800;
 }
 
+.adminEditForm {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.adminActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.scoreEditGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
 .dangerButton {
   min-height: 44px;
   border: 0;
@@ -792,27 +849,6 @@ textarea:focus {
   }
 }
 
-@keyframes stickyBounce {
-  from {
-    opacity: 0;
-    transform: translateY(80px) scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes ctaPulse {
-  0%,
-  100% {
-    box-shadow: 0 18px 44px rgba(236, 23, 79, 0.34);
-  }
-  50% {
-    box-shadow: 0 22px 54px rgba(236, 23, 79, 0.46), 0 0 0 10px rgba(255, 79, 154, 0);
-  }
-}
-
 @keyframes headlinePop {
   from {
     opacity: 0;
@@ -835,14 +871,6 @@ textarea:focus {
 }
 
 @media (min-width: 640px) {
-  body {
-    padding-bottom: 0;
-  }
-
-  .mobileStickyCta {
-    display: none;
-  }
-
   .partyNav {
     left: 50%;
     right: auto;
@@ -868,6 +896,10 @@ textarea:focus {
 
   .twoCols {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .scoreEditGrid {
+    grid-template-columns: minmax(0, 1fr) 110px 110px;
   }
 }
 
@@ -903,7 +935,8 @@ textarea:focus {
   }
 
   .memoryParty .partyForm,
-  .memoryParty .gallery {
+  .memoryParty .gallery,
+  .memoryParty .galleryActions {
     grid-column: 2;
   }
 
@@ -911,16 +944,16 @@ textarea:focus {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .fullGallery {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .adminStats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .adminRow {
-    grid-template-columns: minmax(0, 1fr) max-content;
-  }
-
   .adminRow.withThumb {
-    grid-template-columns: 86px minmax(0, 1fr) max-content;
+    grid-template-columns: 86px minmax(0, 1fr);
   }
 
   .adminRow img {

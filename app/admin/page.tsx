@@ -6,6 +6,7 @@ import { event } from "../../src/lib/event";
 import { supabase } from "../../src/lib/supabase";
 
 type LoadStatus = "idle" | "loading" | "success" | "error";
+type MutationResult = { error: { message: string } | null };
 
 type Rsvp = {
   id: string;
@@ -174,15 +175,115 @@ export default function AdminPage() {
     setActionMessage("Dati locali svuotati.");
   }
 
+  async function updateRsvp(id: string, eventSubmit: FormEvent<HTMLFormElement>) {
+    eventSubmit.preventDefault();
+    const form = new FormData(eventSubmit.currentTarget);
+    const payload = {
+      guest_name: String(form.get("guest_name") || "").trim(),
+      attending: form.get("attending") === "yes",
+      allergies: String(form.get("allergies") || "").trim() || null,
+      plus_one_name: String(form.get("plus_one_name") || "").trim() || null,
+      plus_one_allergies: String(form.get("plus_one_allergies") || "").trim() || null,
+      message: String(form.get("message") || "").trim() || null
+    };
+
+    if (!payload.guest_name) {
+      setStatus("error");
+      setActionMessage("Il nome della conferma non puo essere vuoto.");
+      return;
+    }
+
+    if (!supabase) {
+      return;
+    }
+
+    const client = supabase;
+    await runMutation(
+      () => client.from("rsvps").update(payload).eq("id", id),
+      "Conferma aggiornata."
+    );
+  }
+
+  async function updatePost(id: string, eventSubmit: FormEvent<HTMLFormElement>) {
+    eventSubmit.preventDefault();
+    const form = new FormData(eventSubmit.currentTarget);
+    const payload = {
+      author_name: String(form.get("author_name") || "").trim(),
+      message: String(form.get("message") || "").trim() || null
+    };
+
+    if (!payload.author_name) {
+      setStatus("error");
+      setActionMessage("Il nome della foto non puo essere vuoto.");
+      return;
+    }
+
+    if (!supabase) {
+      const nextPosts = posts.map((post) => (post.id === id ? { ...post, ...payload } : post));
+      setPosts(nextPosts);
+      localStorage.setItem(localPostsKey, JSON.stringify(nextPosts));
+      setActionMessage("Foto locale aggiornata.");
+      setStatus("success");
+      return;
+    }
+
+    const client = supabase;
+    await runMutation(
+      () => client.from("wall_posts").update(payload).eq("id", id),
+      "Foto aggiornata."
+    );
+  }
+
+  async function updateScore(id: string, eventSubmit: FormEvent<HTMLFormElement>) {
+    eventSubmit.preventDefault();
+    const form = new FormData(eventSubmit.currentTarget);
+    const payload = {
+      player_name: String(form.get("player_name") || "").trim(),
+      score: Number(form.get("score")),
+      total: Number(form.get("total"))
+    };
+
+    if (!payload.player_name || !Number.isInteger(payload.score) || !Number.isInteger(payload.total)) {
+      setStatus("error");
+      setActionMessage("Nome e punteggio devono essere validi.");
+      return;
+    }
+
+    if (!supabase) {
+      const nextScores = scores
+        .map((score) => (score.id === id ? { ...score, ...payload } : score))
+        .sort((a, b) => b.score - a.score);
+      setScores(nextScores);
+      localStorage.setItem(localScoresKey, JSON.stringify(nextScores));
+      setActionMessage("Punteggio locale aggiornato.");
+      setStatus("success");
+      return;
+    }
+
+    const client = supabase;
+    await runMutation(
+      () => client.from("quiz_scores").update(payload).eq("id", id),
+      "Punteggio aggiornato."
+    );
+  }
+
   async function runDelete(
-    action: () => PromiseLike<{ error: { message: string } | null }>,
+    action: () => PromiseLike<MutationResult>,
     successMessage: string
+  ) {
+    await runMutation(action, successMessage, "Eliminazione non riuscita");
+  }
+
+  async function runMutation(
+    action: () => PromiseLike<MutationResult>,
+    successMessage: string,
+    errorPrefix = "Aggiornamento non riuscito"
   ) {
     setStatus("loading");
     const { error } = await action();
     if (error) {
       setStatus("error");
-      setActionMessage(`Eliminazione non riuscita: ${error.message}`);
+      setActionMessage(`${errorPrefix}: ${error.message}`);
       return;
     }
 
@@ -275,21 +376,49 @@ export default function AdminPage() {
           ) : (
             rsvps.map((rsvp) => (
               <article className="adminRow" key={rsvp.id}>
-                <div>
-                  <strong>{rsvp.guest_name}</strong>
-                  <p>{rsvp.attending ? "Partecipa" : "Non partecipa"}</p>
-                  {(rsvp.allergies || rsvp.plus_one_name || rsvp.plus_one_allergies || rsvp.message) && (
-                    <small>
-                      {[
-                        rsvp.allergies && `Allergie: ${rsvp.allergies}`,
-                        rsvp.plus_one_name && `+1: ${rsvp.plus_one_name}`,
-                        rsvp.plus_one_allergies && `Allergie +1: ${rsvp.plus_one_allergies}`,
-                        rsvp.message && `Messaggio: ${rsvp.message}`
-                      ].filter(Boolean).join(" | ")}
-                    </small>
-                  )}
-                </div>
-                <button className="dangerButton" onClick={() => deleteRsvp(rsvp.id)}>Elimina</button>
+                <form className="adminEditForm" onSubmit={(eventSubmit) => updateRsvp(rsvp.id, eventSubmit)}>
+                  <div className="twoCols">
+                    <label>
+                      Nome
+                      <input name="guest_name" defaultValue={rsvp.guest_name} required />
+                    </label>
+                    <fieldset>
+                      <legend>Presenza</legend>
+                      <label className="radioLine">
+                        <input type="radio" name="attending" value="yes" defaultChecked={rsvp.attending} />
+                        Viene
+                      </label>
+                      <label className="radioLine">
+                        <input type="radio" name="attending" value="no" defaultChecked={!rsvp.attending} />
+                        Non viene
+                      </label>
+                    </fieldset>
+                  </div>
+                  <div className="twoCols">
+                    <label>
+                      Allergie
+                      <input name="allergies" defaultValue={rsvp.allergies || ""} />
+                    </label>
+                    <label>
+                      Nome +1
+                      <input name="plus_one_name" defaultValue={rsvp.plus_one_name || ""} />
+                    </label>
+                  </div>
+                  <div className="twoCols">
+                    <label>
+                      Allergie +1
+                      <input name="plus_one_allergies" defaultValue={rsvp.plus_one_allergies || ""} />
+                    </label>
+                    <label>
+                      Messaggio
+                      <input name="message" defaultValue={rsvp.message || ""} />
+                    </label>
+                  </div>
+                  <div className="adminActions">
+                    <button className="partyButton primary" disabled={status === "loading"}>Salva</button>
+                    <button className="dangerButton" type="button" onClick={() => deleteRsvp(rsvp.id)}>Elimina</button>
+                  </div>
+                </form>
               </article>
             ))
           )}
@@ -309,11 +438,22 @@ export default function AdminPage() {
               <article className="adminRow withThumb" key={post.id}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- Supabase public upload URLs are dynamic. */}
                 <img src={post.image_url} alt="" />
-                <div>
-                  <strong>{post.author_name}</strong>
-                  {post.message && <p>{post.message}</p>}
-                </div>
-                <button className="dangerButton" onClick={() => deletePost(post)}>Elimina</button>
+                <form className="adminEditForm" onSubmit={(eventSubmit) => updatePost(post.id, eventSubmit)}>
+                  <div className="twoCols">
+                    <label>
+                      Nome
+                      <input name="author_name" defaultValue={post.author_name} required />
+                    </label>
+                    <label>
+                      Dedica
+                      <input name="message" defaultValue={post.message || ""} maxLength={240} />
+                    </label>
+                  </div>
+                  <div className="adminActions">
+                    <button className="partyButton primary" disabled={status === "loading"}>Salva</button>
+                    <button className="dangerButton" type="button" onClick={() => deletePost(post)}>Elimina</button>
+                  </div>
+                </form>
               </article>
             ))
           )}
@@ -331,11 +471,26 @@ export default function AdminPage() {
           ) : (
             scores.map((score) => (
               <article className="adminRow" key={score.id}>
-                <div>
-                  <strong>{score.player_name}</strong>
-                  <p>{score.score}/{score.total}</p>
-                </div>
-                <button className="dangerButton" onClick={() => deleteScore(score.id)}>Elimina</button>
+                <form className="adminEditForm" onSubmit={(eventSubmit) => updateScore(score.id, eventSubmit)}>
+                  <div className="scoreEditGrid">
+                    <label>
+                      Nome
+                      <input name="player_name" defaultValue={score.player_name} required />
+                    </label>
+                    <label>
+                      Punti
+                      <input name="score" type="number" min="0" defaultValue={score.score} required />
+                    </label>
+                    <label>
+                      Totale
+                      <input name="total" type="number" min="1" defaultValue={score.total} required />
+                    </label>
+                  </div>
+                  <div className="adminActions">
+                    <button className="partyButton primary" disabled={status === "loading"}>Salva</button>
+                    <button className="dangerButton" type="button" onClick={() => deleteScore(score.id)}>Elimina</button>
+                  </div>
+                </form>
               </article>
             ))
           )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { event, quizQuestions } from "../src/lib/event";
 import { supabase } from "../src/lib/supabase";
 
@@ -31,8 +32,11 @@ export default function Home() {
   const [posts, setPosts] = useState<WallPost[]>([]);
   const [scores, setScores] = useState<QuizScore[]>([]);
   const [wallStatus, setWallStatus] = useState<RsvpStatus>("idle");
+  const [hasPlusOne, setHasPlusOne] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState("");
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
   const [quizName, setQuizName] = useState("");
+  const [quizError, setQuizError] = useState("");
   const [quizResult, setQuizResult] = useState<{ score: number; total: number } | null>(null);
 
   const isAfterDeadline = useMemo(() => {
@@ -40,6 +44,8 @@ export default function Home() {
     const deadline = new Date(`${event.rsvpDeadline}T23:59:59+02:00`);
     return today > deadline;
   }, []);
+
+  const previewPosts = useMemo(() => shufflePosts(posts).slice(0, 5), [posts]);
 
   useEffect(() => {
     void loadWallPosts();
@@ -90,8 +96,8 @@ export default function Home() {
       guest_name: String(form.get("guest_name") || "").trim(),
       attending: form.get("attending") === "yes",
       allergies: String(form.get("allergies") || "").trim(),
-      plus_one_name: String(form.get("plus_one_name") || "").trim(),
-      plus_one_allergies: String(form.get("plus_one_allergies") || "").trim(),
+      plus_one_name: hasPlusOne ? String(form.get("plus_one_name") || "").trim() : "",
+      plus_one_allergies: hasPlusOne ? String(form.get("plus_one_allergies") || "").trim() : "",
       message: String(form.get("message") || "").trim()
     };
 
@@ -104,6 +110,7 @@ export default function Home() {
     if (!supabase) {
       setRsvpStatus("success");
       eventSubmit.currentTarget.reset();
+      setHasPlusOne(false);
       return;
     }
 
@@ -116,6 +123,7 @@ export default function Home() {
 
     setRsvpStatus("success");
     eventSubmit.currentTarget.reset();
+    setHasPlusOne(false);
   }
 
   async function submitWallPost(eventSubmit: FormEvent<HTMLFormElement>) {
@@ -152,6 +160,7 @@ export default function Home() {
       localStorage.setItem(localPostsKey, JSON.stringify(nextPosts));
       setWallStatus("success");
       formElement.reset();
+      setSelectedFileName("");
       return;
     }
 
@@ -180,11 +189,19 @@ export default function Home() {
 
     setWallStatus("success");
     formElement.reset();
+    setSelectedFileName("");
     await loadWallPosts();
   }
 
   async function submitQuiz(eventSubmit: FormEvent<HTMLFormElement>) {
     eventSubmit.preventDefault();
+    setQuizError("");
+
+    if (!quizName.trim()) {
+      setQuizResult(null);
+      setQuizError("Inserisci il nome prima di fare il quiz.");
+      return;
+    }
 
     const total = quizQuestions.length;
     const score = quizQuestions.reduce((sum, question) => {
@@ -197,10 +214,6 @@ export default function Home() {
 
     const result = { score, total };
     setQuizResult(result);
-
-    if (!quizName.trim()) {
-      return;
-    }
 
     const payload = {
       player_name: quizName.trim(),
@@ -239,7 +252,6 @@ export default function Home() {
         <a href="#bacheca">Foto</a>
         <a href="#quiz">Game</a>
       </nav>
-      <a className="mobileStickyCta" href="#rsvp">Conferma presenza</a>
 
       <section className="partyHero" id="invito">
         <div className="heroCopy">
@@ -322,16 +334,26 @@ export default function Home() {
             Allergie o intolleranze
             <textarea name="allergies" rows={3} placeholder="Scrivi eventuali esigenze alimentari" />
           </label>
-          <div className="twoCols">
-            <label>
-              Nome +1
-              <input name="plus_one_name" autoComplete="name" />
-            </label>
-            <label>
-              Allergie +1
-              <input name="plus_one_allergies" />
-            </label>
-          </div>
+          <label className="checkLine">
+            <input
+              type="checkbox"
+              checked={hasPlusOne}
+              onChange={(eventChange) => setHasPlusOne(eventChange.target.checked)}
+            />
+            Ho il +1
+          </label>
+          {hasPlusOne && (
+            <div className="twoCols">
+              <label>
+                Nome +1
+                <input name="plus_one_name" autoComplete="name" required={hasPlusOne} />
+              </label>
+              <label>
+                Allergie +1
+                <input name="plus_one_allergies" />
+              </label>
+            </div>
+          )}
           <label>
             Messaggio per Annachiara
             <textarea name="message" rows={3} />
@@ -357,9 +379,16 @@ export default function Home() {
               Il tuo nome *
               <input name="author_name" required />
             </label>
-            <label>
+            <label className="filePicker">
               Foto *
-              <input name="image" type="file" accept="image/png,image/jpeg,image/webp" required />
+              <input
+                name="image"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                required
+                onChange={(eventChange) => setSelectedFileName(eventChange.target.files?.[0]?.name || "")}
+              />
+              <span>{selectedFileName || "Scegli una foto"}</span>
             </label>
           </div>
           <label>
@@ -377,7 +406,7 @@ export default function Home() {
           {posts.length === 0 ? (
             <p className="empty">La bacheca e pronta: la prima foto puo essere la tua.</p>
           ) : (
-            posts.map((post) => (
+            previewPosts.map((post) => (
               <article className="postCard" key={post.id}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- User uploads are dynamic Supabase URLs in a static export. */}
                 <img src={post.image_url} alt={`Foto pubblicata da ${post.author_name}`} loading="lazy" />
@@ -389,6 +418,11 @@ export default function Home() {
             ))
           )}
         </div>
+        {posts.length > 5 && (
+          <div className="galleryActions">
+            <Link className="partyButton light" href="/gallery">Vedi tutte le foto</Link>
+          </div>
+        )}
       </section>
 
       <section className="partySection quizParty" id="quiz">
@@ -400,8 +434,12 @@ export default function Home() {
 
         <form className="partyPanel partyForm quizForm" onSubmit={submitQuiz}>
           <label>
-            Nome per la classifica
-            <input value={quizName} onChange={(eventChange) => setQuizName(eventChange.target.value)} />
+            Nome per la classifica *
+            <input
+              value={quizName}
+              onChange={(eventChange) => setQuizName(eventChange.target.value)}
+              required
+            />
           </label>
           {quizQuestions.map((question, index) => (
             <fieldset key={question.id} className="questionBlock">
@@ -434,6 +472,7 @@ export default function Home() {
             </fieldset>
           ))}
           <button className="partyButton primary">Scopri il punteggio</button>
+          {quizError && <p className="error">{quizError}</p>}
           {quizResult && (
             <p className="result" role="status">
               Hai fatto <strong>{quizResult.score}/{quizResult.total}</strong>.
@@ -459,6 +498,13 @@ export default function Home() {
       </section>
     </main>
   );
+}
+
+function shufflePosts(posts: WallPost[]) {
+  return [...posts]
+    .map((post) => ({ post, order: Math.random() }))
+    .sort((a, b) => a.order - b.order)
+    .map(({ post }) => post);
 }
 
 function normalizeAnswer(answer: string) {

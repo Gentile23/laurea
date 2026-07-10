@@ -47,6 +47,13 @@ on public.rsvps for delete
 to anon
 using (true);
 
+drop policy if exists "Admin page can update rsvps" on public.rsvps;
+create policy "Admin page can update rsvps"
+on public.rsvps for update
+to anon
+using (true)
+with check (true);
+
 drop policy if exists "Anyone can read wall posts" on public.wall_posts;
 create policy "Anyone can read wall posts"
 on public.wall_posts for select
@@ -65,6 +72,13 @@ on public.wall_posts for delete
 to anon
 using (true);
 
+drop policy if exists "Admin page can update wall posts" on public.wall_posts;
+create policy "Admin page can update wall posts"
+on public.wall_posts for update
+to anon
+using (true)
+with check (true);
+
 drop policy if exists "Anyone can read quiz scores" on public.quiz_scores;
 create policy "Anyone can read quiz scores"
 on public.quiz_scores for select
@@ -82,6 +96,13 @@ create policy "Admin page can delete quiz scores"
 on public.quiz_scores for delete
 to anon
 using (true);
+
+drop policy if exists "Admin page can update quiz scores" on public.quiz_scores;
+create policy "Admin page can update quiz scores"
+on public.quiz_scores for update
+to anon
+using (true)
+with check (true);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
