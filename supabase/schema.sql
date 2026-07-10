@@ -35,6 +35,18 @@ on public.rsvps for insert
 to anon
 with check (true);
 
+drop policy if exists "Admin page can read rsvps" on public.rsvps;
+create policy "Admin page can read rsvps"
+on public.rsvps for select
+to anon
+using (true);
+
+drop policy if exists "Admin page can delete rsvps" on public.rsvps;
+create policy "Admin page can delete rsvps"
+on public.rsvps for delete
+to anon
+using (true);
+
 drop policy if exists "Anyone can read wall posts" on public.wall_posts;
 create policy "Anyone can read wall posts"
 on public.wall_posts for select
@@ -47,6 +59,12 @@ on public.wall_posts for insert
 to anon
 with check (true);
 
+drop policy if exists "Admin page can delete wall posts" on public.wall_posts;
+create policy "Admin page can delete wall posts"
+on public.wall_posts for delete
+to anon
+using (true);
+
 drop policy if exists "Anyone can read quiz scores" on public.quiz_scores;
 create policy "Anyone can read quiz scores"
 on public.quiz_scores for select
@@ -58,6 +76,12 @@ create policy "Anyone can insert quiz scores"
 on public.quiz_scores for insert
 to anon
 with check (true);
+
+drop policy if exists "Admin page can delete quiz scores" on public.quiz_scores;
+create policy "Admin page can delete quiz scores"
+on public.quiz_scores for delete
+to anon
+using (true);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
@@ -81,5 +105,11 @@ with check (bucket_id = 'wall-images');
 drop policy if exists "Anyone can read wall images" on storage.objects;
 create policy "Anyone can read wall images"
 on storage.objects for select
+to anon
+using (bucket_id = 'wall-images');
+
+drop policy if exists "Admin page can delete wall images" on storage.objects;
+create policy "Admin page can delete wall images"
+on storage.objects for delete
 to anon
 using (bucket_id = 'wall-images');

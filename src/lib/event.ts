@@ -53,21 +53,21 @@ export const quizQuestions: QuizQuestion[] = [
     id: "filologia-romanza",
     type: "choice",
     question: "Quante volte ho ridato l'esame di filologia romanza?",
-    options: ["1", "2", "0, passato subito"],
+    options: ["1", "2", "0", "Passato subito"],
     correctAnswer: "2"
   },
   {
     id: "coniglietto",
-    type: "text",
+    type: "choice",
     question: "Come si chiamava il mio coniglietto?",
-    acceptedAnswers: ["DA COMPLETARE"],
-    placeholder: "Scrivi il nome"
+    options: ["Amo", "Luna", "Nuvola"],
+    correctAnswer: "Amo"
   },
   {
     id: "gatto",
-    type: "text",
+    type: "choice",
     question: "Come si chiama il mio gatto?",
-    acceptedAnswers: ["DA COMPLETARE"],
-    placeholder: "Scrivi il nome"
+    options: ["Salem", "Milo", "Romeo"],
+    correctAnswer: "Salem"
   }
 ];
