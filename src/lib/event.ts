@@ -2,7 +2,7 @@ export const event = {
   graduateName: "Annachiara Soldivieri",
   degree: "Lingue, Letterature e Culture dell'Europa e delle Americhe",
   dateLabel: "27 luglio 2026",
-  timeLabel: "Subito dopo la proclamazione, in mattinata",
+  timeLabel: "Subito dopo la proclamazione, a pranzo",
   venueName: "O' Scemo Centro Storico",
   venueAddress: "Via Francesco de Sanctis, Via Nilo, 1, 80134 Napoli NA",
   mapsUrl: "https://www.google.com/maps/search/?api=1&query=O%27%20Scemo%20Centro%20Storico%20Via%20Francesco%20de%20Sanctis%20Via%20Nilo%201%2080134%20Napoli",
